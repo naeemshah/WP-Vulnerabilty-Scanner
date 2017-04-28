@@ -23,9 +23,8 @@ class WP_Vul_Scanner
     public function scan()
     {
 
-        require __DIR__ . '/curl/vendor/autoload.php';
-
-        $curl    = new Curl\Curl();
+        
+        
         $plugins = self::getAllPlugins();
         if (count($plugins) < 1) {
            self::sendJsonResponse(array("status"=>0,"msg"=>"No plugins Found"));
@@ -39,13 +38,12 @@ class WP_Vul_Scanner
             $version    = $data['Version'];
             $pluginName = $tmp[0];
              self::$currentPluginName = $pluginName;
-           
-            $curl->get('https://wpvulndb.com/api/v2/plugins/' . $pluginName);
-            if ($curl->error) {
+           $response = wp_remote_get('https://wpvulndb.com/api/v2/plugins/' . $pluginName);
+            if (!isset($response["response"]["code"]) || $response["response"]["code"] != 200) {
                $pluginsData[self::$currentPluginName] = false;
             } else {
 
-                $pluginsData[$pluginName] = self::processVul($version, json_decode($curl->response, true));
+                $pluginsData[$pluginName] = self::processVul($version, json_decode($response['body'], true));
             }
 
         }
